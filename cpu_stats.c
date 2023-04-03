@@ -1,8 +1,24 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/**
+ * @brief Displaying the number of cores of current system.
+ *
+ * @return void
+ */
+void ShowCore() {
+  printf("----------------------------\n");
+  int core_num = sysconf(_SC_NPROCESSORS_ONLN);
+  if (core_num == -1) {
+    perror("sysconf");
+    exit(1);
+  }
+  printf("Number of cores: %d\n", core_num);
+}
 
 /**
  * @brief Displaying the utilization percentage of CPU by reading file
@@ -13,7 +29,6 @@
  * @return the utilization percentage of CPU
  */
 double ShowCpu(int period) {
-  int core_num = sysconf(_SC_NPROCESSORS_ONLN);
   unsigned long long pre[4];
   unsigned long long aft[4];
   unsigned long long diff[4];
@@ -76,9 +91,10 @@ int main(int argc, char *argv[]) {
   }
 
   for (int i = 0; i < sample_size; i++) {
+    ShowCore();
     cpu = ShowCpu(period);
-    if (graphic_state == 1){
-        CpuGraph(cpu);
+    if (graphic_state == 1) {
+      CpuGraph(cpu);
     }
     printf("%s\n", special_string);
   }

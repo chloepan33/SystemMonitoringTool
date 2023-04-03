@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     }
   }
   for (int i = 0; i < sample_size; i++) {
-    printf("-----------This is iteration %d-----------------\n", i + 1);
+    printf("----------------------------\n");
     printf("### Sessions/users ### \n");
     struct utmp *data;
     setutent();
