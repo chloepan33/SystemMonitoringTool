@@ -1,22 +1,18 @@
-CC=gcc
-CFLAGS=-Wall -Wextra -Wpedantic -std=c99 -O2
-LDFLAGS=
+CC = gcc
+CFLAGS = -Wall -Werror
+LDFLAGS =
 
-.PHONY: all clean
+all : test user_stats
 
-all: test user_stats memory_stats cpu_stats
+test : test.c
+	gcc -Wall -g -o test test.c
 
-test: test.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+user_stats : user_stats.c
+	gcc -Wall -g -o user_stats user_stats.c
 
-user_stats: user_stats.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+memory_stats : memory_stats.c
+	gcc -Wall -g -o memory_stats memory_stats.c
 
-memory_stats: memory_stats.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-cpu_stats: cpu_stats.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f test user_stats memory_stats cpu_stats
+	rm -f test user_stats *.o

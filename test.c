@@ -47,16 +47,16 @@ int main() {
     exit(1);
   }
   while (fgets(result, 512, pipe_file) != NULL) {
-    // // read from pip line by line
-    // if (strncmp(result, special_string, strlen(special_string)) == 0) {
-    //   printf("iteration %d is done\n", i++);
-    // } else {
-    //   printf("%s", result);
-    // }
+    // read from pip line by line
+    if (strncmp(result, special_string, strlen(special_string)) == 0) {
+      printf("iteration %d is done\n", i++);
+    } else {
+      printf("%s", result);
+    }
   }
 
-  // /* Wait for child process to complete */
-  // wait(NULL);
+  /* Wait for child process to complete */
+  wait(NULL);
 
-  // return 0;
+  return 0;
 }
