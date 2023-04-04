@@ -136,9 +136,9 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
       if (sscanf(argv[i], "--samples=%d", &sample_size) == 1 &&
           (sample_size > 0)) {
-        printf("The current sample size is %d\n", sample_size);
+        continue;
       } else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0)) {
-        printf("The current sample frequency is %d sec\n", period);
+        continue;
       } else if (strcmp(argv[i], "--graphics") == 0) {
         graphic_state = 1;
       }

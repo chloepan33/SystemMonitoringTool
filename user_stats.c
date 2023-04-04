@@ -14,18 +14,21 @@
 
 int main(int argc, char *argv[]) {
   const char *special_string = "##SPECIAL_STRING##";
-  setbuf(stdout, NULL); // disable buff 
+  setbuf(stdout, NULL); // disable buff
   int sample_size = 10;
   int period = 1;
+  int graphic_state = 0;
 
   if (argc > 1) {
     // scan entered arguments
     for (int i = 1; i < argc; i++) {
       if (sscanf(argv[i], "--samples=%d", &sample_size) == 1 &&
           (sample_size > 0)) {
-        printf("The current sample size is %d\n", sample_size);
+        continue;
       } else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0)) {
-        printf("The current sample frequency is %d sec\n", period);
+        continue;
+      } else if (strcmp(argv[i], "--graphics") == 0) {
+        graphic_state = 1;
       }
     }
   }
