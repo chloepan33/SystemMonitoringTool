@@ -108,7 +108,8 @@ void RunStats(int *fd, char *file, char *argv[]) {
   }
 }
 
-void ShowDefault(char *mem_argv[], char *user_argv[], char *cpu_argv[]) {
+void ShowDefault(int sample_size, int sequential_state, int system_state,
+                 char *mem_argv[], char *user_argv[], char *cpu_argv[]) {
   // initial fds
   int mem_fd[2];
   int user_fd[2];
@@ -135,84 +136,55 @@ void ShowDefault(char *mem_argv[], char *user_argv[], char *cpu_argv[]) {
     exit(1);
   }
 
-  // print out header
-  printf("----------------------------\n");
-  printf("Nbr of samples: %d -- every %d secs\n", 10, 1);
+  if (sequential_state == 1) {
+    for (int i = 0; i < sample_size; i++) {
+      printf(">>> iteration %d\n", i + 1);
+      ShowMemoryUsage();
+      printf("----------------------------\n");
+      printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot) \n");
+      for (int m = 0; m < i; m++) {
+        printf("\n");
+      }
+      read_output(mem_file);
+      for (int c = 1; c < sample_size - i; c++) {
+        printf("\n");
+      }
+      if (system_state == 0) {
+        read_output(user_file);
+      }
+      read_output(cpu_file);
+      printf("----------------------------\n");
+    }
+    ShowSystemInfo();
+    return;
+  }
 
   // print memory usage
   ShowMemoryUsage();
 
   saveCursorPosition();
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < sample_size; i++) {
     restoreCursorPosition();
     read_output(mem_file);
     saveCursorPosition();
-    for (int j = 0; j < 9 - i; j++) {
+    for (int j = 0; j < sample_size - 1 - i; j++) {
       printf("\n");
     }
-    read_output(user_file);
+    if (system_state == 0) {
+      read_output(user_file);
+    }
     read_output(cpu_file);
   }
   ShowSystemInfo();
 }
 
-/**
- * @brief Displaying system information including memory usage and cpu usage in
- * sequantial form
- *
- * @param sample_size indicate how many times the statistics are going to be
- * collected
- * @param period indicate how frequently to sample in seconds
- * @param graphic_state indicate whether or not to show graphics
- *
- * @return void
- */
-void ShowSequentials(int sample_size) {
-  // initial fds
-  int mem_fd[2];
-  int cpu_fd[2];
-  char *mem = "./memory_stats";
-  char *cpu = "./cpu_stats";
-  char *mem_argv[] = {"memory_stats", NULL};
-  char *cpu_argv[] = {"cpu_stats", NULL};
-
-  RunStats(mem_fd, mem, mem_argv);
-  RunStats(cpu_fd, cpu, cpu_argv);
-
-  // else we are in parent process
-  // close all write fds
-  close(cpu_fd[1]);
-  close(mem_fd[1]);
-
-  FILE *mem_file = fdopen(mem_fd[0], "r");
-  FILE *cpu_file = fdopen(cpu_fd[0], "r");
-  if ((mem_file == NULL) || (cpu_file == NULL)) {
-    perror("fdopen");
-    exit(1);
-  }
-  for (int i = 0; i < sample_size; i++) {
-    printf(">>> iteration %d\n", i + 1);
-    ShowMemoryUsage();
-    printf("----------------------------\n");
-    printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot) \n");
-    for (int m = 0; m < i; m++) {
-      printf("\n");
-    }
-    read_output(mem_file);
-    for (int c = 1; c < sample_size - i; c++) {
-      printf("\n");
-    }
-    read_output(cpu_file);
-    printf("----------------------------\n");
-  }
-}
-
 int main(int argc, char *argv[]) {
 
   // initialize default argvs for child process
-  char *mem_argv[5] = {"memory_stats", "--samples=10", "--tdelay=1", NULL};
-  char *cpu_argv[5] = {"cpu_stats", "--samples=10", "--tdelay=1", NULL};
-  char *user_argv[5] = {"user_stats", "--samples=10", "--tdelay=1", NULL};
+  char *mem_argv[5] = {"memory_stats", "--samples=10", "--tdelay=1", NULL,
+                       NULL};
+  char *cpu_argv[5] = {"cpu_stats", "--samples=10", "--tdelay=1", NULL, NULL};
+  char *user_argv[5] = {"user_stats", "--samples=10", "--tdelay=1", NULL, NULL};
 
   // set default value of sample size and sampled frequency
   int sample_size = 10;
@@ -229,7 +201,10 @@ int main(int argc, char *argv[]) {
 
   if (argc == 1) // if user enter 0 command line arguments
   {
-    ShowDefault(mem_argv, user_argv, cpu_argv);
+    printf("----------------------------\n");
+    printf("Nbr of samples: %d -- every %d secs\n", sample_size, period);
+    ShowDefault(sample_size, sequential_state, system_state, mem_argv,
+                user_argv, cpu_argv);
     return 0;
   } else {
     // scan all entered arguments
@@ -241,6 +216,9 @@ int main(int argc, char *argv[]) {
         user_state = 1;
       } else if (strcmp(argv[i], "--graphics") == 0) {
         graphic_state = 1;
+        mem_argv[3] = argv[i];
+        cpu_argv[3] = argv[i];
+        user_argv[3] = argv[i];
       } else if (strcmp(argv[i], "--sequential") == 0) {
         sequential_state = 1;
       }
@@ -278,20 +256,53 @@ int main(int argc, char *argv[]) {
   }
 
   // show current sample size and frequency
+  printf("----------------------------\n");
   printf("Nbr of samples: %d -- every %d secs\n", sample_size, period);
-  char *sample_size_string;
-  char *period_string;
+  char sample_size_string[20];
+  char period_string[20];
   snprintf(sample_size_string, 20, "--samples=%d", sample_size);
   snprintf(period_string, 20, "--tdelay=%d", period);
+  mem_argv[1] = sample_size_string;
+  cpu_argv[1] = sample_size_string;
+  user_argv[1] = sample_size_string;
+  mem_argv[2] = period_string;
+  cpu_argv[2] = period_string;
+  user_argv[2] = period_string;
   if (user_state == 1) // if user state is avtivate
   {
-    if (system_state == 1 || sequential_state == 1 || graphic_state == 1) {
+    if (system_state == 1 || graphic_state == 1) {
       // any combination with other tate is considerd as invalid
       printf("Command combination invalid\n");
       exit(0);
     } else {
       // if only user_only state is activated
       // display user information according to period and sample size
+      int user_fd[2];
+      RunStats(user_fd, "./user_stats", user_argv);
+      close(user_fd[1]);
+      FILE *user_file = fdopen(user_fd[0], "r");
+      if (user_file == NULL) {
+        perror("fdopen");
+        exit(1);
+      }
+      if (sequential_state == 1) {
+        for (int i = 0; i < sample_size; i++) {
+          printf(">>> iteration %d\n", i + 1);
+          read_output(user_file);
+        }
+      } else {
+        saveCursorPosition();
+        for (int i = 0; i < sample_size; i++) {
+          restoreCursorPosition();
+          saveCursorPosition();
+          read_output(user_file);
+        }
+      }
+
+      return 0;
     }
   }
+  ShowDefault(sample_size, sequential_state, system_state, mem_argv, user_argv,
+              cpu_argv);
+  return 0;
 }
