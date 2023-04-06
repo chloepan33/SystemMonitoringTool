@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
   setbuf(stdout, NULL); // disable buff
   int sample_size = 10;
   int period = 1;
-  int graphic_state = 0;
 
   if (argc > 1) {
     // scan entered arguments
@@ -27,8 +26,6 @@ int main(int argc, char *argv[]) {
         continue;
       } else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0)) {
         continue;
-      } else if (strcmp(argv[i], "--graphics") == 0) {
-        graphic_state = 1;
       }
     }
   }
