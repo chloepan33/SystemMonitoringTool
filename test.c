@@ -8,12 +8,28 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+void INThandler(int sig) {
+  char c;
+
+  signal(sig, SIG_IGN);
+  char buffer[80] = "Do you really want to quit? [y/n]";
+  write(1, buffer, 80);
+  c = getchar();
+  if (c == 'y' || c == 'Y')
+    exit(0);
+  else
+    signal(SIGINT, INThandler);
+  getchar(); // Get new line character
+}
+
 void saveCursorPosition(void) {
-  printf("\033[s"); // Send ANSI escape sequence to save cursor position.
+  // printf("\x1B[s"); // Send ANSI escape sequence to save cursor position.
+  printf("\0337");
 }
 
 void restoreCursorPosition(void) {
-  printf("\033[u"); // Send ANSI escape sequence to restore cursor position.
+  // printf("\x1B[u"); // Send ANSI escape sequence to restore cursor position.
+  printf("\0338");
 }
 
 void read_output(FILE *read_file) {
@@ -167,6 +183,7 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
     restoreCursorPosition();
     read_output(mem_file);
     saveCursorPosition();
+
     for (int j = 0; j < sample_size - 1 - i; j++) {
       printf("\n");
     }
@@ -179,6 +196,21 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
 }
 
 int main(int argc, char *argv[]) {
+
+  // signal(SIGINT, sigint_handler);
+  // signal(SIGTSTP, SIG_IGN);
+
+  struct sigaction act;
+  act.sa_handler = SIG_IGN;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+
+  if (sigaction(SIGTSTP, &act, NULL) == -1) {
+    perror("sigaction");
+    exit(1);
+  }
+
+  signal(SIGINT, INThandler);
 
   // initialize default argvs for child process
   char *mem_argv[5] = {"memory_stats", "--samples=10", "--tdelay=1", NULL,
