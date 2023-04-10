@@ -1,5 +1,6 @@
 
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,11 +78,18 @@ int main(int argc, char *argv[]) {
   int graphic_state = 0;
   double cpu = 0;
 
+  // set the ctrl-c signal to defalut and ctrl-z to be ignored
+  if (signal(SIGINT, SIG_DFL) == SIG_ERR ||
+      signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
+    perror("signal");
+    exit(1);
+  }
+
   if (argc > 1) {
     for (int i = 1; i < argc; i++) {
       if (sscanf(argv[i], "--samples=%d", &sample_size) == 1 &&
           (sample_size > 0)) {
-       continue;
+        continue;
       } else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0)) {
         continue;
       } else if (strcmp(argv[i], "--graphics") == 0) {

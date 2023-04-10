@@ -8,19 +8,63 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void INThandler(int sig) {
-  char c;
+void ctrlc_handler(int sig) {
+  // signal(sig, ctrlc_handler);  // first ignore the ctrl-c
+  fprintf(stderr, "You hit Ctrl-C! Do you really want to quit? [y/n] ");
+  char c;        // a char to store user input
+  c = getchar(); // read user input (y or n)
+  if (c == 'y' || c == 'Y') {
+    exit(0);   // if user does what to quit, terminate
+  } else {     // else reset the ctrl-c to this handler
+    getchar(); // get a newline character
 
-  signal(sig, SIG_IGN);
-  char buffer[80] = "Do you really want to quit? [y/n]";
-  write(1, buffer, 80);
-  c = getchar();
-  if (c == 'y' || c == 'Y')
-    exit(0);
-  else
-    signal(SIGINT, INThandler);
-  getchar(); // Get new line character
+    // reset the ctrl-c to this handler function
+    if (signal(sig, ctrlc_handler) == SIG_ERR) {
+      perror("signal");
+      exit(1);
+    }
+    printf("\x1b[1F"); // move up one line
+    printf("\033[2K"); // erase the line
+  }
 }
+
+void ctrlz_handler(int sig) {
+  // reset the ctrl-z to this handler function
+  if (signal(sig, ctrlz_handler) == SIG_ERR) {
+    perror("signal");
+    exit(1);
+  }
+  printf("\033[2D"); // erase "^Z"
+}
+
+void set_signals() {
+  if (signal(SIGINT, ctrlc_handler) == SIG_ERR ||
+      signal(SIGTSTP, ctrlz_handler) == SIG_ERR) {
+    perror("signal");
+    exit(1);
+  }
+}
+
+// void INThandler(int sig) {
+//   char c;
+
+//   signal(sig, SIG_IGN);
+//   char buffer[80] = "Do you really want to quit? [y/n]";
+//   write(2, buffer, 80);
+//   c = getchar();
+//   if (c == 'y' || c == 'Y') {
+//     exit(0);
+//   } else {
+//     // getchar(); // get a newline character
+//     // reset the ctrl-c to this handler function
+//     if (signal(SIGINT, INThandler) == SIG_ERR) {
+//       perror("signal");
+//       exit(1);
+//     }
+//     // printf("\x1b[1F"); // move up one line
+//     // printf("\x1b[2K"); // erase the line
+//   }
+// }
 
 void saveCursorPosition(void) {
   // printf("\x1B[s"); // Send ANSI escape sequence to save cursor position.
@@ -28,7 +72,8 @@ void saveCursorPosition(void) {
 }
 
 void restoreCursorPosition(void) {
-  // printf("\x1B[u"); // Send ANSI escape sequence to restore cursor position.
+  // printf("\x1B[u"); // Send ANSI escape sequence to restore cursor
+  // position.
   printf("\0338");
 }
 
@@ -197,20 +242,22 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
 
 int main(int argc, char *argv[]) {
 
+  set_signals();
+
   // signal(SIGINT, sigint_handler);
   // signal(SIGTSTP, SIG_IGN);
 
-  struct sigaction act;
-  act.sa_handler = SIG_IGN;
-  sigemptyset(&act.sa_mask);
-  act.sa_flags = 0;
+  // struct sigaction act;
+  // act.sa_handler = SIG_IGN;
+  // sigemptyset(&act.sa_mask);
+  // act.sa_flags = 0;
 
-  if (sigaction(SIGTSTP, &act, NULL) == -1) {
-    perror("sigaction");
-    exit(1);
-  }
+  // if (sigaction(SIGTSTP, &act, NULL) == -1) {
+  //   perror("sigaction");
+  //   exit(1);
+  // }
 
-  signal(SIGINT, INThandler);
+  // signal(SIGINT, INThandler);
 
   // initialize default argvs for child process
   char *mem_argv[5] = {"memory_stats", "--samples=10", "--tdelay=1", NULL,
