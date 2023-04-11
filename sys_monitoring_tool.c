@@ -322,7 +322,7 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
 int main(int argc, char *argv[])
 {
 
-  set_signals(); // set signal
+  set_signals(); // set signals
 
   // initialize default argvs for child process
   char *mem_argv[5] = {"memory_stats", "--samples=10", "--tdelay=1", NULL,
