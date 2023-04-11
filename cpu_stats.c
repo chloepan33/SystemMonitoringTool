@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
   double cpu = 0;
 
   // set the ctrl-c signal to defalut and ctrl-z to be ignored
-  if (signal(SIGINT, SIG_DFL) == SIG_ERR ||
+  if (signal(SIGINT, SIG_IGN) == SIG_ERR ||
       signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
     perror("signal");
     exit(1);
