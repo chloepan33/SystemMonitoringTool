@@ -125,21 +125,33 @@ double ShowMemory(double pre, int graph_state) {
   return (double)phys_used;
 }
 
+/**
+ * @brief main function for getting memory info
+ *
+ * Sample once every 1 sec and sample total of 10 times in default
+ * Able to take command line argument to print each itertion in graphic, sequential or refreshing form.
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char *argv[]) {
-  const char *special_string = "##SPECIAL_STRING##";
+  const char *special_string = "##SPECIAL_STRING##"; // indicate one iteration has done
   setbuf(stdout, NULL); // disable buff
   int sample_size = 10;
   int period = 1;
   int graphic_state = 0;
   double pre = 0;
 
-  // set the ctrl-c signal to defalut and ctrl-z to be ignored
+  // set the ctrl-c signal and ctrl-z to be ignored
   if (signal(SIGINT, SIG_IGN) == SIG_ERR ||
       signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
     perror("signal");
     exit(1);
   }
 
+  // loop through all command line arguments
+  // set corresponding flag
   if (argc > 1) {
     for (int i = 1; i < argc; i++) {
       if (sscanf(argv[i], "--samples=%d", &sample_size) == 1 &&
@@ -153,6 +165,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+// print out information in the required format
   for (int i = 0; i < sample_size; i++) {
     pre = ShowMemory(pre, graphic_state);
     printf("%s\n", special_string);

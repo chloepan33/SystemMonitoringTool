@@ -8,18 +8,29 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void ctrlc_handler(int sig) {
-  // signal(sig, ctrlc_handler);  // first ignore the ctrl-c
-  fprintf(stderr, "You hit Ctrl-C! Do you really want to quit? [y/n] ");
+/**
+ * @brief handler for control c signal
+ *
+ * ask user if they really wannt quit the program
+ *  
+ * @param sig
+ */
+void ctrlc_handler(int sig)
+{
+  fprintf(stderr, "Do you really want to quit? [y/n] ");
   char c;        // a char to store user input
   c = getchar(); // read user input (y or n)
-  if (c == 'y' || c == 'Y') {
-    exit(0);   // if user does what to quit, terminate
-  } else {     // else reset the ctrl-c to this handler
+  if (c == 'y' || c == 'Y')
+  {
+    exit(0); // if user does what to quit, terminate
+  }
+  else
+  {            // else reset the ctrl-c to this handler
     getchar(); // get a newline character
 
     // reset the ctrl-c to this handler function
-    if (signal(sig, ctrlc_handler) == SIG_ERR) {
+    if (signal(sig, ctrlc_handler) == SIG_ERR)
+    {
       perror("signal");
       exit(1);
     }
@@ -28,63 +39,83 @@ void ctrlc_handler(int sig) {
   }
 }
 
-void ctrlz_handler(int sig) {
+/**
+ * @brief handler for control z signal
+ * 
+ * it will ignore the signal and do nothing
+ * 
+ * @param sig 
+ */
+
+void ctrlz_handler(int sig)
+{
   // reset the ctrl-z to this handler function
-  if (signal(sig, ctrlz_handler) == SIG_ERR) {
+  if (signal(sig, ctrlz_handler) == SIG_ERR)
+  {
     perror("signal");
     exit(1);
   }
   printf("\033[2D"); // erase "^Z"
 }
 
-void set_signals() {
+
+/**
+ * @brief Set the signals object for control z and control c
+ * and perform error checking
+ * 
+ */
+void set_signals()
+{
   if (signal(SIGINT, ctrlc_handler) == SIG_ERR ||
-      signal(SIGTSTP, ctrlz_handler) == SIG_ERR) {
+      signal(SIGTSTP, ctrlz_handler) == SIG_ERR)
+  {
     perror("signal");
     exit(1);
   }
 }
 
-// void INThandler(int sig) {
-//   char c;
-
-//   signal(sig, SIG_IGN);
-//   char buffer[80] = "Do you really want to quit? [y/n]";
-//   write(2, buffer, 80);
-//   c = getchar();
-//   if (c == 'y' || c == 'Y') {
-//     exit(0);
-//   } else {
-//     // getchar(); // get a newline character
-//     // reset the ctrl-c to this handler function
-//     if (signal(SIGINT, INThandler) == SIG_ERR) {
-//       perror("signal");
-//       exit(1);
-//     }
-//     // printf("\x1b[1F"); // move up one line
-//     // printf("\x1b[2K"); // erase the line
-//   }
-// }
-
-void saveCursorPosition(void) {
+/**
+ * @brief save current cursor position
+ * 
+ */
+void saveCursorPosition(void)
+{
   // printf("\x1B[s"); // Send ANSI escape sequence to save cursor position.
   printf("\0337");
 }
 
-void restoreCursorPosition(void) {
+/**
+ * @brief restore the most recently saved cursor position
+ * 
+ */
+void restoreCursorPosition(void)
+{
   // printf("\x1B[u"); // Send ANSI escape sequence to restore cursor
   // position.
   printf("\0338");
 }
 
-void read_output(FILE *read_file) {
+
+/**
+ * @brief read output writte in the given result file
+ * 
+ * @param read_file 
+ */
+void read_output(FILE *read_file)
+{
   char result[512];
   const char *special_string = "##SPECIAL_STRING##";
-  while (fgets(result, 512, read_file) != NULL) {
+  while (fgets(result, 512, read_file) != NULL)
+  {
     // read from pip line by line
-    if (strncmp(result, special_string, strlen(special_string)) == 0) {
+    if (strncmp(result, special_string, strlen(special_string)) == 0)
+    {
+      // if read the special string indicating one iteration done
+      // break the loop
       break;
-    } else {
+    }
+    else
+    {
       printf("%s", result);
     }
   }
@@ -98,12 +129,16 @@ void read_output(FILE *read_file) {
  * @return void
  */
 
-void ShowMemoryUsage() {
+void ShowMemoryUsage()
+{
   struct rusage r_usage; // get current program memory usage
-  if (getrusage(RUSAGE_SELF, &r_usage) < 0) {
+  if (getrusage(RUSAGE_SELF, &r_usage) < 0)
+  {
     perror("getrusage"); // if fail, show error message
     exit(1);
-  } else {
+  }
+  else
+  {
     // else print out memory usage in unit of kilobytes
     printf("Memory usage: %ld kilobytes\n", r_usage.ru_maxrss);
   }
@@ -121,12 +156,16 @@ void ShowMemoryUsage() {
  *
  * @return void
  */
-void ShowSystemInfo() {
+void ShowSystemInfo()
+{
   printf("----------------------------\n");
   struct utsname uts; // get system information
-  if (uname(&uts) < 0) {
+  if (uname(&uts) < 0)
+  {
     perror("SystemInfo error"); // If fail, show error message
-  } else {
+  }
+  else
+  {
     // else if success, print out detailed informations
     printf("### System Information ### \n");
     printf("System Name:  %s\n", uts.sysname);
@@ -138,26 +177,40 @@ void ShowSystemInfo() {
   printf("----------------------------\n");
 }
 
-void RunStats(int *fd, char *file, char *argv[]) {
-  if (pipe(fd) < 0) {
+/**
+ * @brief create child process for running independent c program
+ * 
+ * @param fd reserved space for pipe fds
+ * @param file indicate which c program to run
+ * @param argv arguments passed to the child c program
+ */
+void RunStats(int *fd, char *file, char *argv[])
+{
+  // creating pipe
+  if (pipe(fd) < 0)
+  {
     perror("pipe()");
     exit(1);
   }
 
+// creating child process
   int id = fork();
-  if (id < 0) {
+  if (id < 0)
+  {
     perror("fork()");
     exit(1);
   }
 
-  if (id == 0) {
+  if (id == 0)
+  {
     // child process 1, reponsible for memory usage
     // close all read fds and the write fds that wont be used
 
     close(fd[0]);
 
     // Redirect standard output to write end of pipe
-    if (dup2(fd[1], STDOUT_FILENO) == -1) {
+    if (dup2(fd[1], STDOUT_FILENO) == -1)
+    {
       perror("dup2");
       exit(1);
     }
@@ -169,8 +222,20 @@ void RunStats(int *fd, char *file, char *argv[]) {
   }
 }
 
+
+/**
+ * @brief run all three child programs and read outputs in main process
+ * 
+ * @param sample_size 
+ * @param sequential_state if 1, then print output in sequential form 
+ * @param system_state if 1, then dont print user info
+ * @param mem_argv arguments array passed to memory child program
+ * @param user_argv arguments array passed to user child program
+ * @param cpu_argv arguments array passed to cpu child program
+ */
 void ShowDefault(int sample_size, int sequential_state, int system_state,
-                 char *mem_argv[], char *user_argv[], char *cpu_argv[]) {
+                 char *mem_argv[], char *user_argv[], char *cpu_argv[])
+{
   // initial fds
   int mem_fd[2];
   int user_fd[2];
@@ -189,28 +254,37 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
   close(mem_fd[1]);
   close(user_fd[1]);
 
+  // struct file for each of read fds
+  // therefore we can use fgets later
   FILE *mem_file = fdopen(mem_fd[0], "r");
   FILE *user_file = fdopen(user_fd[0], "r");
   FILE *cpu_file = fdopen(cpu_fd[0], "r");
-  if ((mem_file == NULL) || (user_file == NULL) || (cpu_file == NULL)) {
+  if ((mem_file == NULL) || (user_file == NULL) || (cpu_file == NULL))
+  {
     perror("fdopen");
     exit(1);
   }
 
-  if (sequential_state == 1) {
-    for (int i = 0; i < sample_size; i++) {
-      printf(">>> iteration %d\n", i + 1);
+  // to print each iteration in sequential form
+  if (sequential_state == 1)
+  {
+    for (int i = 0; i < sample_size; i++)
+    {
+      printf(">>> iteration %d\n", i + 1); // indicate which iteration 
       ShowMemoryUsage();
       printf("----------------------------\n");
       printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot) \n");
-      for (int m = 0; m < i; m++) {
+      for (int m = 0; m < i; m++)
+      {
         printf("\n");
       }
       read_output(mem_file);
-      for (int c = 1; c < sample_size - i; c++) {
+      for (int c = 1; c < sample_size - i; c++)
+      {
         printf("\n");
       }
-      if (system_state == 0) {
+      if (system_state == 0)
+      {
         read_output(user_file);
       }
       read_output(cpu_file);
@@ -220,19 +294,24 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
     return;
   }
 
+  // else print out result in default form
+
   // print memory usage
   ShowMemoryUsage();
 
   saveCursorPosition();
-  for (int i = 0; i < sample_size; i++) {
+  for (int i = 0; i < sample_size; i++)
+  {
     restoreCursorPosition();
     read_output(mem_file);
     saveCursorPosition();
 
-    for (int j = 0; j < sample_size - 1 - i; j++) {
+    for (int j = 0; j < sample_size - 1 - i; j++)
+    {
       printf("\n");
     }
-    if (system_state == 0) {
+    if (system_state == 0)
+    {
       read_output(user_file);
     }
     read_output(cpu_file);
@@ -240,24 +319,10 @@ void ShowDefault(int sample_size, int sequential_state, int system_state,
   ShowSystemInfo();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
-  set_signals();
-
-  // signal(SIGINT, sigint_handler);
-  // signal(SIGTSTP, SIG_IGN);
-
-  // struct sigaction act;
-  // act.sa_handler = SIG_IGN;
-  // sigemptyset(&act.sa_mask);
-  // act.sa_flags = 0;
-
-  // if (sigaction(SIGTSTP, &act, NULL) == -1) {
-  //   perror("sigaction");
-  //   exit(1);
-  // }
-
-  // signal(SIGINT, INThandler);
+  set_signals(); // set signal
 
   // initialize default argvs for child process
   char *mem_argv[5] = {"memory_stats", "--samples=10", "--tdelay=1", NULL,
@@ -285,48 +350,69 @@ int main(int argc, char *argv[]) {
     ShowDefault(sample_size, sequential_state, system_state, mem_argv,
                 user_argv, cpu_argv);
     return 0;
-  } else {
+  }
+  else
+  {
     // scan all entered arguments
-    for (int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++)
+    {
       // if valid arguments enterd, activiate corresponding state
-      if (strcmp(argv[i], "--system") == 0) {
+      if (strcmp(argv[i], "--system") == 0)
+      {
         system_state = 1;
-      } else if (strcmp(argv[i], "--user") == 0) {
+      }
+      else if (strcmp(argv[i], "--user") == 0)
+      {
         user_state = 1;
-      } else if (strcmp(argv[i], "--graphics") == 0) {
+      }
+      else if (strcmp(argv[i], "--graphics") == 0)
+      {
         graphic_state = 1;
         mem_argv[3] = argv[i];
         cpu_argv[3] = argv[i];
         user_argv[3] = argv[i];
-      } else if (strcmp(argv[i], "--sequential") == 0) {
+      }
+      else if (strcmp(argv[i], "--sequential") == 0)
+      {
         sequential_state = 1;
       }
       // if sample size or frequency changed
       // update it and show message with current value
       else if (sscanf(argv[i], "--samples=%d", &sample_size) == 1 &&
-               (sample_size > 0)) {
+               (sample_size > 0))
+      {
         printf("The current sample size is %d\n", sample_size);
-      } else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0)) {
+      }
+      else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0))
+      {
         printf("The current sample frequency is %d sec\n", period);
       }
       // if integer entered
-      else if (sscanf(argv[i], "%d", &tem_int) == 1 && (tem_int > 0)) {
-        if (count_int == 2) {
+      else if (sscanf(argv[i], "%d", &tem_int) == 1 && (tem_int > 0))
+      {
+        if (count_int == 2)
+        {
           printf("To many input integers!\n"); // if already have 2 integers,
                                                // display error message
           exit(0);
-        } else if (count_int == 1) { // if only 1 integer enterd, store the
-                                     // second one as new frequency
+        }
+        else if (count_int == 1)
+        { // if only 1 integer enterd, store the
+          // second one as new frequency
           period = tem_int;
           tem_int = 0;
           count_int = 2;
-        } else if (count_int == 0) {
+        }
+        else if (count_int == 0)
+        {
           // if it is the first integer, store the value as new sample size
           sample_size = tem_int;
           tem_int = 0;
           count_int = 1;
         }
-      } else {
+      }
+      else
+      {
         // display error message for any other arguments
         printf("Invalid command line arguments\n");
         exit(0);
@@ -349,29 +435,38 @@ int main(int argc, char *argv[]) {
   user_argv[2] = period_string;
   if (user_state == 1) // if user state is avtivate
   {
-    if (system_state == 1 || graphic_state == 1) {
+    if (system_state == 1 || graphic_state == 1)
+    {
       // any combination with other tate is considerd as invalid
       printf("Command combination invalid\n");
       exit(0);
-    } else {
+    }
+    else
+    {
       // if only user_only state is activated
       // display user information according to period and sample size
       int user_fd[2];
       RunStats(user_fd, "./user_stats", user_argv);
       close(user_fd[1]);
       FILE *user_file = fdopen(user_fd[0], "r");
-      if (user_file == NULL) {
+      if (user_file == NULL)
+      {
         perror("fdopen");
         exit(1);
       }
-      if (sequential_state == 1) {
-        for (int i = 0; i < sample_size; i++) {
+      if (sequential_state == 1)
+      {
+        for (int i = 0; i < sample_size; i++)
+        {
           printf(">>> iteration %d\n", i + 1);
           read_output(user_file);
         }
-      } else {
+      }
+      else
+      {
         saveCursorPosition();
-        for (int i = 0; i < sample_size; i++) {
+        for (int i = 0; i < sample_size; i++)
+        {
           restoreCursorPosition();
           saveCursorPosition();
           read_output(user_file);
