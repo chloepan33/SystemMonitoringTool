@@ -129,15 +129,17 @@ double ShowMemory(double pre, int graph_state) {
  * @brief main function for getting memory info
  *
  * Sample once every 1 sec and sample total of 10 times in default
- * Able to take command line argument to print each itertion in graphic, sequential or refreshing form.
- * 
- * @param argc 
- * @param argv 
- * @return int 
+ * Able to take command line argument to print each itertion in graphic,
+ * sequential or refreshing form.
+ *
+ * @param argc
+ * @param argv
+ * @return int
  */
 int main(int argc, char *argv[]) {
-  const char *special_string = "##SPECIAL_STRING##"; // indicate one iteration has done
-  setbuf(stdout, NULL); // disable buff
+  const char *special_string =
+      "##SPECIAL_STRING##"; // indicate one iteration has done
+  setbuf(stdout, NULL);     // disable buff
   int sample_size = 10;
   int period = 1;
   int graphic_state = 0;
@@ -165,7 +167,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-// print out information in the required format
+  // print out information in the required format
   for (int i = 0; i < sample_size; i++) {
     pre = ShowMemory(pre, graphic_state);
     printf("%s\n", special_string);

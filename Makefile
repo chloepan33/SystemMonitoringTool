@@ -1,20 +1,22 @@
 CC = gcc
 CFLAGS = -Wall -Werror
-LDFLAGS =
 
 all : sys_monitoring_tool user_stats cpu_stats memory_stats
 
-sys_monitoring_tool : sys_monitoring_tool.c
-	gcc -Wall -g -o sys_monitoring_tool sys_monitoring_tool.c
+sys_monitoring_tool : sys_monitoring_tool.o
+	$(CC) -o $@ $<
 
-user_stats : user_stats.c
-	gcc -Wall -g -o user_stats user_stats.c
+user_stats : user_stats.o
+	$(CC) -o $@ $<
 
-memory_stats : memory_stats.c
-	gcc -Wall -g -o memory_stats memory_stats.c
+memory_stats : memory_stats.o
+	$(CC) -o $@ $<
 
-cpu_stats : cpu_stats.c
-	gcc -Wall -g -o cpu_stats cpu_stats.c
+cpu_stats : cpu_stats.o
+	$(CC) -o $@ $<
 
-clean:
+%.o : %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean :
 	rm -f sys_monitoring_tool user_stats cpu_stats memory_stats *.o

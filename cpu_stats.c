@@ -11,12 +11,10 @@
  *
  * @return void
  */
-void ShowCore()
-{
+void ShowCore() {
   printf("----------------------------\n");
   int core_num = sysconf(_SC_NPROCESSORS_ONLN);
-  if (core_num == -1)
-  {
+  if (core_num == -1) {
     perror("sysconf");
     exit(1);
   }
@@ -31,8 +29,7 @@ void ShowCore()
  *
  * @return the utilization percentage of CPU
  */
-double ShowCpu(int period)
-{
+double ShowCpu(int period) {
   unsigned long long pre[4];
   unsigned long long aft[4];
   unsigned long long diff[4];
@@ -46,8 +43,7 @@ double ShowCpu(int period)
   fscanf(fp, "%s %llu %llu %llu %llu", cpu, &aft[0], &aft[1], &aft[2],
          &aft[3]); // read current cpu values
   fclose(fp);
-  for (int i = 0; i < 4; i++)
-  {
+  for (int i = 0; i < 4; i++) {
     diff[i] = aft[i] - pre[i]; // caculate differences
   }
   unsigned long long percent = diff[0] + diff[1] + diff[2];
@@ -66,11 +62,9 @@ double ShowCpu(int period)
  *
  * @return void
  */
-void CpuGraph(double cpu)
-{
+void CpuGraph(double cpu) {
   printf("\t");
-  for (int i = 0; i < (int)cpu; i++)
-  {
+  for (int i = 0; i < (int)cpu; i++) {
     printf("|");
   }
   printf("%.2f\n", cpu * 0.01);
@@ -80,17 +74,18 @@ void CpuGraph(double cpu)
  * @brief main function for getting cpu info
  *
  * Sample once every 1 sec and sample total of 10 times in default
- * Able to take command line argument to print each itertion in graphic, sequential or refreshing form.
+ * Able to take command line argument to print each itertion in graphic,
+ * sequential or refreshing form.
  *
  * @param argc
  * @param argv
  * @return int
  */
 
-int main(int argc, char *argv[])
-{
-  const char *special_string = "##SPECIAL_STRING##"; // indicate one iteration has done
-  setbuf(stdout, NULL);                              // disable buff
+int main(int argc, char *argv[]) {
+  const char *special_string =
+      "##SPECIAL_STRING##"; // indicate one iteration has done
+  setbuf(stdout, NULL);     // disable buff
   int sample_size = 10;
   int period = 1;
   int graphic_state = 0;
@@ -98,41 +93,31 @@ int main(int argc, char *argv[])
 
   // set the ctrl-c signal and ctrl-z to be ignored
   if (signal(SIGINT, SIG_IGN) == SIG_ERR ||
-      signal(SIGTSTP, SIG_IGN) == SIG_ERR)
-  {
+      signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
     perror("signal");
     exit(1);
   }
 
   // loop through all command line arguments
   // set corresponding flag
-  if (argc > 1)
-  {
-    for (int i = 1; i < argc; i++)
-    {
+  if (argc > 1) {
+    for (int i = 1; i < argc; i++) {
       if (sscanf(argv[i], "--samples=%d", &sample_size) == 1 &&
-          (sample_size > 0))
-      {
+          (sample_size > 0)) {
         continue;
-      }
-      else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0))
-      {
+      } else if (sscanf(argv[i], "--tdelay=%d", &period) == 1 && (period > 0)) {
         continue;
-      }
-      else if (strcmp(argv[i], "--graphics") == 0)
-      {
+      } else if (strcmp(argv[i], "--graphics") == 0) {
         graphic_state = 1;
       }
     }
   }
 
   // print out information in the required format
-  for (int i = 0; i < sample_size; i++)
-  {
+  for (int i = 0; i < sample_size; i++) {
     ShowCore();
     cpu = ShowCpu(period);
-    if (graphic_state == 1)
-    {
+    if (graphic_state == 1) {
       CpuGraph(cpu);
     }
     printf("%s\n", special_string);
